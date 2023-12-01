@@ -99,36 +99,54 @@ public class TreeRedBlack<T extends Comparable<T>> {
     }
 
     // insert
-    public void insert(T key) {
-        Node<T> node = root;
-        Node<T> parent = null;
+    public boolean insert(T key) {
 
-        // Traverse the tree to the left or right depending on the key
-        while (node != null) {
-            parent = node;
-            if (key.compareTo(node.data) == ROOT_SMALL) {
-                node = node.left;
-            } else if (key.compareTo(node.data) == ROOT_BIG) {
-                node = node.right;
+        // new node reference
+        Node<T> newNode;
+
+        // check root
+        if(root == null) {
+            newNode = new Node<T>(key);
+            root = newNode;
+        }else{
+            try{
+                newNode = insertDataAndGetNode(root, key);
+            }catch (IllegalStateException e){
+                return false;
+            }
+            
+        }
+
+        // fixRedBlackPropertiesAfterInsert(newNode);
+        return true;
+    }
+
+    private Node<T> insertDataAndGetNode(Node<T> node, T value) {
+            if (node == null) {
+                Node<T> newNode = new Node<T>(value);
+                return newNode;
+            }
+        
+            if (value.compareTo(node.data) == ROOT_SMALL) {
+                if (node.left == null) {
+                    Node<T> newNode = new Node<>(value);
+                    node.left = newNode;
+                    return newNode;
+                } else {
+                    return insertDataAndGetNode(node.left, value);
+                }
+            } else if (value.compareTo(node.data) == ROOT_BIG) {
+                if (node.right == null) {
+                    Node<T> newNode = new Node<>(value);
+                    node.right = newNode;
+                    return newNode;
+                } else {
+                    return insertDataAndGetNode(node.right, value);
+                }
             } else {
-                throw new IllegalArgumentException("BST already contains a node with key " + key);
+                throw new IllegalStateException("Repeat value");
             }
         }
-
-        // Insert new node
-        Node<T> newNode = new Node<T>(key);
-        newNode.color = Node.RED;
-        if (parent == null) {
-            root = newNode;
-        } else if (key.compareTo(parent.data) == ROOT_SMALL) {
-            parent.left = newNode;
-        } else {
-            parent.right = newNode;
-        }
-        newNode.parent = parent;
-
-        fixRedBlackPropertiesAfterInsert(newNode);
-    }
 
     private Node<T> getUncle(Node<T> parent) {
         Node<T> grandparent = parent.parent;
@@ -144,7 +162,6 @@ public class TreeRedBlack<T extends Comparable<T>> {
     private void fixRedBlackPropertiesAfterInsert(Node<T> node) {
         // https://es.wikipedia.org/wiki/%C3%81rbol_rojo-negro
         // https://github.com/SvenWoltmann/binary-tree/blob/main/src/main/java/eu/happycoders/binarytree/RedBlackTree.java#L345C15-L345C15
-        
 
         Node<T> parent = node.parent;
 
@@ -243,13 +260,9 @@ public class TreeRedBlack<T extends Comparable<T>> {
         }
     }
 
-    
-    
-
     @Override
     public String toString() {
         return root.toString();
     }
 
-    
 }
