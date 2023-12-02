@@ -105,50 +105,56 @@ public class TreeRedBlack<T extends Comparable<T>> {
         Node<T> newNode;
 
         // check root
-        if(root == null) {
+        if (root == null) {
             newNode = new Node<T>(key);
             root = newNode;
-        }else{
-            try{
+        } else {
+            try {
                 newNode = insertDataAndGetNode(root, key);
-            }catch (IllegalStateException e){
+            } catch (IllegalStateException e) {
                 return false;
             }
-            
+
         }
 
-        // fixRedBlackPropertiesAfterInsert(newNode);
+        fixRedBlackPropertiesAfterInsert(newNode);
         return true;
     }
 
     private Node<T> insertDataAndGetNode(Node<T> node, T value) {
-            if (node == null) {
-                Node<T> newNode = new Node<T>(value);
-                return newNode;
-            }
-        
-            if (value.compareTo(node.data) == ROOT_SMALL) {
-                if (node.left == null) {
-                    Node<T> newNode = new Node<>(value);
-                    node.left = newNode;
-                    return newNode;
-                } else {
-                    return insertDataAndGetNode(node.left, value);
-                }
-            } else if (value.compareTo(node.data) == ROOT_BIG) {
-                if (node.right == null) {
-                    Node<T> newNode = new Node<>(value);
-                    node.right = newNode;
-                    return newNode;
-                } else {
-                    return insertDataAndGetNode(node.right, value);
-                }
-            } else {
-                throw new IllegalStateException("Repeat value");
-            }
+        if (node == null) {
+            Node<T> newNode = new Node<T>(value);
+            return newNode;
         }
 
-    private Node<T> getUncle(Node<T> parent) {
+        if (value.compareTo(node.data) == ROOT_SMALL) {
+            if (node.left == null) {
+                Node<T> newNode = new Node<>(value);
+                node.left = newNode;
+                newNode.parent = node;
+                return newNode;
+            } else {
+                return insertDataAndGetNode(node.left, value);
+            }
+        } else if (value.compareTo(node.data) == ROOT_BIG) {
+            if (node.right == null) {
+                Node<T> newNode = new Node<>(value);
+                node.right = newNode;
+                newNode.parent = node;
+                return newNode;
+            } else {
+                return insertDataAndGetNode(node.right, value);
+            }
+        } else {
+            throw new IllegalStateException("Repeat value");
+        }
+    }
+
+    private Node<T> getUncle(Node<T> node) {
+        Node<T> parent = node.parent;
+        if (parent == null) {
+            return null;
+        }
         Node<T> grandparent = parent.parent;
         if (grandparent.left == parent) {
             return grandparent.right;
@@ -163,101 +169,68 @@ public class TreeRedBlack<T extends Comparable<T>> {
         // https://es.wikipedia.org/wiki/%C3%81rbol_rojo-negro
         // https://github.com/SvenWoltmann/binary-tree/blob/main/src/main/java/eu/happycoders/binarytree/RedBlackTree.java#L345C15-L345C15
 
-        Node<T> parent = node.parent;
+        fixInsertCase1(node);
 
-        // Case 1: Parent is null, we've reached the root, the end of the recursion
-        if (parent == null) {
-            // Uncomment the following line if you want to enforce black roots (rule 2):
-            // node.color = BLACK;
+        
+    }
+
+    private void fixInsertCase1(Node<T> node) {
+        if (node.parent == null) {
+            // System.out.println("Raiz roja, cambiamos a negro "+ node.data);
+            node.color = Node.BLACK;
             return;
+        } else {
+            fixInsertCase2(node);
         }
+    }
 
-        // Parent is black --> nothing to do
-        if (parent.color == Node.BLACK) {
+    private void fixInsertCase2(Node<T> node) {
+        if (node.parent.color == Node.BLACK) {
             return;
+        } else {
+            fixInsertCase3(node);
         }
+    }
 
-        // From here on, parent is red
-        Node grandparent = parent.parent;
+    private void fixInsertCase3(Node<T> node) {
 
-        // Case 2:
-        // Not having a grandparent means that parent is the root. If we enforce black
-        // roots
-        // (rule 2), grandparent will never be null, and the following if-then block can
-        // be
-        // removed.
-        if (grandparent == null) {
-            // As this method is only called on red nodes (either on newly inserted ones -
-            // or -
-            // recursively on red grandparents), all we have to do is to recolor the root
-            // black.
-            parent.color = Node.BLACK;
-            return;
-        }
+        Node<T> uncle = getUncle(node);
 
-        // Get the uncle (may be null/nil, in which case its color is BLACK)
-        Node<T> uncle = getUncle(parent);
-
-        // Case 3: Uncle is red -> recolor parent, grandparent and uncle
         if (uncle != null && uncle.color == Node.RED) {
-            parent.color = Node.BLACK;
-            grandparent.color = Node.RED;
+            node.parent.color = Node.BLACK;
             uncle.color = Node.BLACK;
+            node.parent.parent.color = Node.RED;
+            fixInsertCase1(node.parent.parent);
+        } else {
+            fixInsertCase4(node);
+        }
+    }
 
-            // Call recursively for grandparent, which is now red.
-            // It might be root or have a red parent, in which case we need to fix more...
-            fixRedBlackPropertiesAfterInsert(grandparent);
+    private void fixInsertCase4(Node<T> node) {
+        Node<T> grandparent = node.parent.parent;
+
+        if (node == node.parent.right && node.parent == grandparent.left) {
+            rotateLeft(node.parent);
+            node = node.left;
+        } else if (node == node.left && node.parent == grandparent.right) {
+            rotateRight(node.parent);
+            node = node.right;
         }
 
-        // Note on performance:
-        // It would be faster to do the uncle color check within the following code.
-        // This way
-        // we would avoid checking the grandparent-parent direction twice (once in
-        // getUncle()
-        // and once in the following else-if). But for better understanding of the code,
-        // I left the uncle color check as a separate step.
+        fixInsertCase5(node);
+    }
 
-        // Parent is left child of grandparent
-        else if (parent == grandparent.left) {
-            // Case 4a: Uncle is black and node is left->right "inner child" of its
-            // grandparent
-            if (node == parent.right) {
-                rotateLeft(parent);
+    private void fixInsertCase5(Node<T> node) {
+        Node<T> grandparent = node.parent.parent;
 
-                // Let "parent" point to the new root node of the rotated sub-tree.
-                // It will be recolored in the next step, which we're going to fall-through to.
-                parent = node;
-            }
-
-            // Case 5a: Uncle is black and node is left->left "outer child" of its
-            // grandparent
+        node.parent.color = Node.RED;
+        grandparent.color = Node.BLACK;
+        if (node == node.parent.left && node.parent == grandparent.left) {
             rotateRight(grandparent);
-
-            // Recolor original parent and grandparent
-            parent.color = Node.BLACK;
-            grandparent.color = Node.RED;
-        }
-
-        // Parent is right child of grandparent
-        else {
-            // Case 4b: Uncle is black and node is right->left "inner child" of its
-            // grandparent
-            if (node == parent.left) {
-                rotateRight(parent);
-
-                // Let "parent" point to the new root node of the rotated sub-tree.
-                // It will be recolored in the next step, which we're going to fall-through to.
-                parent = node;
-            }
-
-            // Case 5b: Uncle is black and node is right->right "outer child" of its
-            // grandparent
+        } else {
             rotateLeft(grandparent);
-
-            // Recolor original parent and grandparent
-            parent.color = node.BLACK;
-            grandparent.color = Node.RED;
         }
+
     }
 
     @Override
