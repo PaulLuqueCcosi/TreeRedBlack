@@ -10,9 +10,12 @@ public class Main {
         tree.insert(5);
         tree.insert(2);
         tree.insert(30);
-     
-
+        tree.insert(15);
 
         System.out.println(tree);
+
+        tree.delete(10);
+        System.out.println(tree);
+
     }
 }

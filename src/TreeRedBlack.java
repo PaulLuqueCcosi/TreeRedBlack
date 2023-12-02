@@ -171,7 +171,6 @@ public class TreeRedBlack<T extends Comparable<T>> {
 
         fixInsertCase1(node);
 
-        
     }
 
     private void fixInsertCase1(Node<T> node) {
@@ -233,9 +232,98 @@ public class TreeRedBlack<T extends Comparable<T>> {
 
     }
 
+    // delete
+    public boolean delete(T key) {
+        Node<T> node = search(key);
+
+        // Node not found?
+        if (node == null) {
+            return false;
+        }
+
+        // At this point, "node" is the node to be deleted
+
+        // In this variable, we'll store the node at which we're going to start to fix
+        // the R-B
+        // properties after deleting a node.
+        Node<T> movedUpNode;
+        int deletedNodeColor;
+
+        // Node has zero or one child
+        if (node.left == null || node.right == null) {
+            movedUpNode = deleteNodeWithZeroOrOneChild(node);
+            deletedNodeColor = node.color;
+        }
+
+        // Node has two children
+        else {
+            // Find minimum node of right subtree ("inorder successor" of current node)
+            Node<T> inOrderSuccessor = findMinimum(node.right);
+
+            // Copy inorder successor's data to current node (keep its color!)
+            node.data = inOrderSuccessor.data;
+
+            // Delete inorder successor just as we would delete a node with 0 or 1 child
+            movedUpNode = deleteNodeWithZeroOrOneChild(inOrderSuccessor);
+            deletedNodeColor = inOrderSuccessor.color;
+        }
+
+        if (deletedNodeColor == Node.BLACK) {
+            // corrigiendo
+            // fixRedBlackPropertiesAfterDelete(movedUpNode);
+
+            // Remove the temporary NIL node
+            if (movedUpNode.getClass() == NilNode.class) {
+                replaceParentsChild(movedUpNode.parent, movedUpNode, null);
+            }
+        }
+
+        return true;
+    }
+
+    private void fixRedBlackPropertiesAfterDelete(Node<T> movedUpNode) {
+    }
+
+    private Node<T> findMinimum(Node<T> node) {
+        while (node.left != null) {
+            node = node.left;
+        }
+        return node;
+    }
+
+    private Node<T> deleteNodeWithZeroOrOneChild(Node<T> node) {
+        // Node has ONLY a left child --> replace by its left child
+        if (node.left != null) {
+            replaceParentsChild(node.parent, node, node.left);
+            return node.left; // moved-up node
+        }
+
+        // Node has ONLY a right child --> replace by its right child
+        else if (node.right != null) {
+            replaceParentsChild(node.parent, node, node.right);
+            return node.right; // moved-up node
+        }
+
+        // Node has no children -->
+        // * node is red --> just remove it
+        // * node is black --> replace it by a temporary NIL node (needed to fix the R-B
+        // rules)
+        else {
+            Node<T> newChild = (node.color == Node.BLACK) ? new NilNode() : null;
+            replaceParentsChild(node.parent, node, newChild);
+            return newChild;
+        }
+    }
+
     @Override
     public String toString() {
         return root.toString();
     }
 
+    private static class NilNode<T> extends Node {
+        private NilNode() {
+            super(0);
+            this.color = BLACK;
+        }
+    }
 }
