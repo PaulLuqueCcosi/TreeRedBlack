@@ -277,7 +277,7 @@ public class TreeRedBlack<T extends Comparable<T>> {
                 replaceParentsChild(movedUpNode.parent, movedUpNode, null);
             }
         }else{
-            System.out.println("Nodo elimiando ROjo no se corrige");
+            System.out.println("Nodo elimiando Rojo no se corrige");
         }
 
         return true;
@@ -343,7 +343,9 @@ public class TreeRedBlack<T extends Comparable<T>> {
             } else {
                 rotateRight(node.parent);
             }
+            // debug
             System.out.println(this.toString());
+            
             fixDeleteCase1(node);
 
         } else {
