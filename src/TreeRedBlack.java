@@ -270,18 +270,17 @@ public class TreeRedBlack<T extends Comparable<T>> {
 
         if (deletedNodeColor == Node.BLACK) {
             // corrigiendo
-            // fixRedBlackPropertiesAfterDelete(movedUpNode);
+            fixRedBlackPropertiesAfterDelete(movedUpNode);
 
             // Remove the temporary NIL node
             if (movedUpNode.getClass() == NilNode.class) {
                 replaceParentsChild(movedUpNode.parent, movedUpNode, null);
             }
+        }else{
+            System.out.println("Nodo elimiando ROjo no se corrige");
         }
 
         return true;
-    }
-
-    private void fixRedBlackPropertiesAfterDelete(Node<T> movedUpNode) {
     }
 
     private Node<T> findMinimum(Node<T> node) {
@@ -312,6 +311,160 @@ public class TreeRedBlack<T extends Comparable<T>> {
             Node<T> newChild = (node.color == Node.BLACK) ? new NilNode() : null;
             replaceParentsChild(node.parent, node, newChild);
             return newChild;
+        }
+    }
+
+    private void fixRedBlackPropertiesAfterDelete(Node<T> movedUpNode) {
+        fixDeleteCase0(movedUpNode);
+    }
+
+    private void fixDeleteCase0(Node<T> node) {
+
+        System.out.println("Caso 0 : " + node.data);
+        if (node == root) {
+            node.color = Node.BLACK;
+            return;
+        } else {
+            fixDeleteCase1(node);
+        }
+    }
+
+    private void fixDeleteCase1(Node<T> node) {
+        System.out.println("Caso 1 : " + node.data);
+
+        Node<T> sibling = getSibling(node);
+
+        if (sibling.color == Node.RED && node.parent.color == Node.BLACK) {
+            sibling.color = Node.BLACK;
+            node.parent.color = Node.RED;
+
+            if (node == node.parent.left) {
+                rotateLeft(node.parent);
+            } else {
+                rotateRight(node.parent);
+            }
+            System.out.println(this.toString());
+            fixDeleteCase1(node);
+
+        } else {
+            fixDeleteCase2(node);
+        }
+
+    }
+
+    private void fixDeleteCase2(Node<T> node) {
+        System.out.println("Caso 2 : " + node.data);
+
+        Node<T> sibling = getSibling(node);
+
+        if (sibling != null && sibling.color == Node.BLACK && node.parent.color == Node.BLACK
+                && isBlackOrNull(sibling.left) && isBlackOrNull(sibling.right)) {
+            sibling.color = Node.RED;
+            fixDeleteCase0(node.parent);
+        } else {
+            fixDeleteCase3(node);
+        }
+    }
+
+    private void fixDeleteCase3(Node<T> node) {
+        System.out.println("Caso 3 : " + node.data);
+
+        Node<T> sibling = getSibling(node);
+
+        if (sibling != null && sibling.color == Node.BLACK && node.parent.color == Node.RED
+                && isBlackOrNull(sibling.left) && isBlackOrNull(sibling.right)) {
+            sibling.color = Node.RED;
+            node.parent.color = Node.BLACK;
+            // comple todas las condiciones
+
+            // fixDeleteCase0(node.parent);
+        } else {
+            fixDeleteCase4(node);
+        }
+    }
+
+    private void fixDeleteCase4(Node<T> node) {
+        System.out.println("Caso 4 : " + node.data);
+
+        Node<T> sibling = getSibling(node);
+
+        // x in left
+        if (node == node.parent.left) {
+            if (sibling != null && sibling.color == Node.BLACK && node.parent != null && isRed(sibling.left)
+                    && isBlackOrNull(sibling.right)) {
+
+                sibling.color = Node.RED;
+                sibling.left.color = Node.BLACK;
+
+                rotateRight(sibling);
+                fixDeleteCase5(node);
+
+            } else {
+                fixDeleteCase5(node);
+            }
+        } else {
+            if (sibling != null && sibling.color == Node.BLACK && node.parent != null && isRed(sibling.right)
+                    && isBlackOrNull(sibling.left)) {
+
+                sibling.color = Node.RED;
+                sibling.right.color = Node.BLACK;
+
+                rotateLeft(sibling);
+                fixDeleteCase5(node);
+
+            } else {
+                fixDeleteCase5(node);
+            }
+        }
+
+    }
+
+    private void fixDeleteCase5(Node<T> node) {
+        System.out.println("Caso 5 : " + node.data);
+
+        Node<T> sibling = getSibling(node);
+
+        // x in left
+        if (node == node.parent.left) {
+            if (sibling != null && sibling.color == Node.BLACK && node.parent != null && isRed(sibling.right)) {
+
+                sibling.color = node.parent.color;
+                node.parent.color = Node.BLACK;
+                sibling.right.color = Node.BLACK;
+                rotateLeft(node.parent);
+                // sibling.left.color = Node.BLACK;
+
+            }
+
+        } else {
+            if (sibling != null && sibling.color == Node.BLACK && node.parent != null && isRed(sibling.left)) {
+
+                sibling.color = node.parent.color;
+                node.parent.color = Node.BLACK;
+                sibling.left.color = Node.BLACK;
+                rotateRight(node.parent);
+                // sibling.left.color = Node.BLACK;
+
+            }
+        }
+    }
+
+    private boolean isBlackOrNull(Node<T> node) {
+        return node == null || node.color == Node.BLACK;
+    }
+
+    private boolean isRed(Node<T> node) {
+        return node != null || node.color == Node.RED;
+    }
+
+    private Node<T> getSibling(Node<T> node) {
+        Node<T> parent = node.parent;
+        if (node == parent.left) {
+            return parent.right;
+        } else if (node == parent.right) {
+            return parent.left;
+        } else {
+            throw new IllegalStateException("Parent is not a child of its grandparent");
         }
     }
 

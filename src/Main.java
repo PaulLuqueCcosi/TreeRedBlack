@@ -14,7 +14,7 @@ public class Main {
 
         System.out.println(tree);
 
-        tree.delete(10);
+        tree.delete(55);
         System.out.println(tree);
 
     }
