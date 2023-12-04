@@ -1,6 +1,6 @@
 package src;
 
-public class TreeRedBlack<T extends Comparable<T>> {
+public class TreeRedBlack<T extends Comparable<T>> implements InterfaceTreeRedBlack<T> {
 
     private static int ROOT_SMALL = -1;
     private static int ROOT_BIG = 1;
@@ -8,7 +8,7 @@ public class TreeRedBlack<T extends Comparable<T>> {
     private Node<T> root;
 
     // rotations
-    public void rotateRight(Node<T> node) {
+    private void rotateRight(Node<T> node) {
         Node<T> parent = node.parent;
         Node<T> leftChild = node.left;
 
@@ -56,34 +56,64 @@ public class TreeRedBlack<T extends Comparable<T>> {
 
     // recorridos
     // Preorder
-    private void preOrderHelper(Node<T> node) {
+    private StringBuilder preOrderHelper(Node<T> node, StringBuilder str) {
         if (node != null) {
-            System.out.print(node.data + " ");
-            preOrderHelper(node.left);
-            preOrderHelper(node.right);
+            str.append(node.data);
+            str.append(node.color);
+            str.append(" ");
+            preOrderHelper(node.left, str);
+            preOrderHelper(node.right, str);
         }
+        return str;
+
     }
 
     // Inorder
-    private void inOrderHelper(Node node) {
+    private StringBuilder inOrderHelper(Node<T> node, StringBuilder str) {
         if (node != null) {
-            inOrderHelper(node.left);
-            System.out.print(node.data + " ");
-            inOrderHelper(node.right);
+            inOrderHelper(node.left, str);
+            str.append(node.data);
+            str.append(node.color);
+            str.append(" ");
+            inOrderHelper(node.right, str);
         }
+        return str;
+
     }
 
     // Post order
-    private void postOrderHelper(Node node) {
+    private StringBuilder postOrderHelper(Node<T> node, StringBuilder str) {
         if (node != null) {
-            postOrderHelper(node.left);
-            postOrderHelper(node.right);
-            System.out.print(node.data + " ");
+            postOrderHelper(node.left, str);
+            postOrderHelper(node.right, str);
+            str.append(node.data);
+            str.append(node.color);
+            str.append(" ");
+
         }
+
+        return str;
+
     }
 
     // search
-    public Node<T> search(T key) {
+    public boolean search(T key) {
+        Node<T> node = root;
+        while (node != null) {
+            if (key.equals(node.data)) {
+                return true;
+            } else if (key.compareTo(node.data) == ROOT_SMALL) {
+                node = node.left;
+            } else {
+                node = node.right;
+            }
+        }
+
+        return false;
+    }
+
+    // search
+    private Node<T> searchNode(T key) {
         Node<T> node = root;
         while (node != null) {
             if (key.equals(node.data)) {
@@ -99,6 +129,7 @@ public class TreeRedBlack<T extends Comparable<T>> {
     }
 
     // insert
+    @Override
     public boolean insert(T key) {
 
         // new node reference
@@ -222,8 +253,8 @@ public class TreeRedBlack<T extends Comparable<T>> {
     private void fixInsertCase5(Node<T> node) {
         Node<T> grandparent = node.parent.parent;
 
-        node.parent.color = Node.RED;
-        grandparent.color = Node.BLACK;
+        node.parent.color = Node.BLACK;
+        grandparent.color = Node.RED;
         if (node == node.parent.left && node.parent == grandparent.left) {
             rotateRight(grandparent);
         } else {
@@ -233,8 +264,9 @@ public class TreeRedBlack<T extends Comparable<T>> {
     }
 
     // delete
+    @Override
     public boolean delete(T key) {
-        Node<T> node = search(key);
+        Node<T> node = searchNode(key);
 
         // Node not found?
         if (node == null) {
@@ -276,7 +308,7 @@ public class TreeRedBlack<T extends Comparable<T>> {
             if (movedUpNode.getClass() == NilNode.class) {
                 replaceParentsChild(movedUpNode.parent, movedUpNode, null);
             }
-        }else{
+        } else {
             System.out.println("Nodo elimiando Rojo no se corrige");
         }
 
@@ -345,7 +377,7 @@ public class TreeRedBlack<T extends Comparable<T>> {
             }
             // debug
             System.out.println(this.toString());
-            
+
             fixDeleteCase1(node);
 
         } else {
@@ -475,10 +507,43 @@ public class TreeRedBlack<T extends Comparable<T>> {
         return root.toString();
     }
 
+    @Override
+    public void clear() {
+        root = null;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return root == null;
+    }
+
     private static class NilNode<T> extends Node {
         private NilNode() {
             super(0);
             this.color = BLACK;
         }
     }
+
+    @Override
+    public String preOrder() {
+        StringBuilder result = new StringBuilder();
+        result = preOrderHelper(root, result);
+        return result.substring(0, result.length()-1);
+        // return result.toString();
+    }
+
+    @Override
+    public String inOrder() {
+        StringBuilder result = new StringBuilder();
+        result = inOrderHelper(root, result);
+        return result.substring(0, result.length()-1);
+    }
+
+    @Override
+    public String postOrder() {
+        StringBuilder result = new StringBuilder();
+        result = postOrderHelper(root, result);
+        return result.substring(0, result.length()-1);
+    }
+
 }
